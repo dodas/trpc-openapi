@@ -136,7 +136,7 @@ const userRouter = createRouter().query('getUser', {
     openapi: {
       enabled: true,
       method: 'GET',
-      path: '/user',
+      path: '/users/{id}',
       tags: ['users'],
       summary: 'Read a user by id',
     },
@@ -263,7 +263,7 @@ const postProtectedRouter = createProtectedRouter()
       openapi: {
         enabled: true,
         method: 'PUT',
-        path: '/post',
+        path: '/posts/{id}',
         tags: ['posts'],
         protect: true,
         summary: 'Update an existing post',

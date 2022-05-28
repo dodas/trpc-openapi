@@ -67,7 +67,11 @@ export const createOpenApiNodeHttpHandler = <
     const reqUrl = req.url!;
     const url = new URL(reqUrl.startsWith('/') ? `http://127.0.0.1${reqUrl}` : reqUrl);
     const path = `/${removeLeadingTrailingSlash(url.pathname)}`;
-    const procedure = procedures[method]?.[path];
+    const methodProcedures = procedures[method] ?? {};
+    const methodProceduresPaths = Object.keys(methodProcedures);
+    const matchedRoute = matchRoute(methodProceduresPaths, path);
+    const procedure = matchedRoute && methodProcedures[matchedRoute.path]!;
+
     let input: any;
     let ctx: any;
     let data: any;
@@ -90,7 +94,18 @@ export const createOpenApiNodeHttpHandler = <
         });
       }
 
-      input = procedure.type === 'query' ? getQuery(req, url) : await getBody(req, maxBodySize);
+      const pathParams = matchedRoute.params;
+
+      input =
+        procedure.type === 'query'
+          ? {
+              ...getQuery(req, url),
+              ...pathParams,
+            }
+          : {
+              ...(await getBody(req, maxBodySize)),
+              ...pathParams,
+            };
       ctx = await createContext?.({ ...opts, req, res });
       const caller = router.createCaller(ctx);
       data = await caller[procedure.type](procedure.path, input);
@@ -149,5 +164,29 @@ export const createOpenApiNodeHttpHandler = <
     }
 
     await teardown?.();
+  };
+};
+
+const matchRoute = (routes: string[], url: string) => {
+  const curlyToRegExp = (stringWithCurlies: string) => {
+    const curliesReplaced = stringWithCurlies.replace(
+      /\{(\w+)\}/g,
+      (_, key: string) => `(?<${key}>[\\w-]+)`,
+    );
+    return new RegExp(`^${curliesReplaced}$`);
+  };
+
+  const matchedRoute = routes.find((r) => curlyToRegExp(r).test(url));
+
+  if (!matchedRoute) {
+    return undefined;
+  }
+
+  const regExp = curlyToRegExp(matchedRoute);
+  const params = regExp.exec(url)?.groups ?? {};
+
+  return {
+    path: matchedRoute,
+    params,
   };
 };
