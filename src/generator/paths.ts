@@ -3,7 +3,7 @@ import { OpenAPIV3 } from 'openapi-types';
 
 import { OpenApiRouter } from '../types';
 import { getInputOutputParsers, removeLeadingTrailingSlash } from '../utils';
-import { getParameterObjects, getRequestBodyObject, getResponsesObject } from './schema';
+import { getMutationInputObjects, getParameterObjects, getResponsesObject } from './schema';
 
 export const getOpenApiPathsObject = (
   appRouter: OpenApiRouter,
@@ -44,7 +44,7 @@ export const getOpenApiPathsObject = (
           summary,
           tags,
           security: protect ? [{ Authorization: [] }] : undefined,
-          parameters: getParameterObjects(inputParser),
+          parameters: getParameterObjects(inputParser, path),
           responses: getResponsesObject(outputParser),
         },
       };
@@ -88,8 +88,8 @@ export const getOpenApiPathsObject = (
           summary,
           tags,
           security: protect ? [{ Authorization: [] }] : undefined,
-          requestBody: getRequestBodyObject(inputParser),
           responses: getResponsesObject(outputParser),
+          ...getMutationInputObjects(inputParser, path),
         },
       };
     } catch (error: any) {

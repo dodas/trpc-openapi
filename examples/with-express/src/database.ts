@@ -17,6 +17,13 @@ export type Database = {
 };
 
 export const database: Database = {
-  users: [],
+  users: [
+    {
+      email: 'djio@jdio.com',
+      id: '3d4f9279-fcdb-4b30-aba8-bc3bcd7172e5',
+      name: 'abc',
+      passcode: '12334',
+    },
+  ],
   posts: [],
 };
